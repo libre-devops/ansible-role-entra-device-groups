@@ -1,0 +1,22 @@
+# Python and tooling
+.venv/
+__pycache__/
+.cache/
+.ansible/
+.pytest_cache/
+.ruff_cache/
+*.retry
+
+# Editors
+.idea/
+.vscode/
+
+# Never commit real group lists, vars files with real values, or vault passwords. The examples
+# folder holds made-up values only.
+/groups.json
+/groups.yml
+*.local.json
+*.local.yml
+*.vault.yml
+vault.yml
+.vault_pass*

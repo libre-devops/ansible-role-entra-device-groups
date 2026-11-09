@@ -1,0 +1,14 @@
+---
+profile: production
+exclude_paths:
+  - .ansible/
+  - .cache/
+  - .github/
+  - .venv/
+
+# Not playbooks: the scenario's shared variables, a task list it includes, and the desired
+# state files the tests load.
+kinds:
+  - vars: "**/molecule/*/vars.yml"
+  - tasks: "**/molecule/*/expect_failure.yml"
+  - vars: "**/molecule/fixtures/*.yml"

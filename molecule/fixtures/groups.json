@@ -1,0 +1,14 @@
+{
+  "device_groups": [
+    {
+      "group": "Linux servers EDR",
+      "devices": ["web01", "web02", "app01", "ghost01"],
+      "remove": ["web06"]
+    },
+    {
+      "group": "Linux servers RTP",
+      "mode": "exact",
+      "devices": ["web01", "db01"]
+    }
+  ]
+}

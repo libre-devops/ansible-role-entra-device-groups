@@ -1,0 +1,128 @@
+---
+- name: Check mode reports the plan and changes nothing
+  hosts: localhost
+  gather_facts: false
+  check_mode: true
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Plan to add db02
+      ansible.builtin.include_role:
+        name: libre_devops.entra_device_groups
+      vars:
+        entra_device_groups_groups:
+          - group: Linux servers EDR
+            devices: [db02]
+
+    - name: Check the plan
+      ansible.builtin.assert:
+        that:
+          - entra_device_groups_results[0].changed
+          - entra_device_groups_results[0].added | map(attribute='displayName') | list == ['db02']
+        quiet: true
+
+    - name: Read the mock's memberships
+      ansible.builtin.uri:
+        url: "{{ mock_url }}/mock/state"
+      register: __state
+      check_mode: false
+
+    - name: Check db02 was not added
+      ansible.builtin.assert:
+        that:
+          - "'db02' not in (__state.json.groups | selectattr('displayName', 'equalto', 'Linux servers EDR') | first).devices"
+        quiet: true
+
+- name: A ready access token works, and changes nothing that is already right
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Get a token the way a pipeline would
+      ansible.builtin.uri:
+        url: "{{ mock_url }}/molecule.example/oauth2/v2.0/token"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          client_id: "{{ entra_device_groups_client_id }}"
+          client_secret: "{{ entra_device_groups_client_secret }}"
+          scope: "{{ mock_url }}/.default"
+          grant_type: client_credentials
+      register: __token
+      no_log: true
+
+    - name: Ask the mock to throttle the next two requests
+      ansible.builtin.uri:
+        url: "{{ mock_url }}/mock/throttle"
+        method: POST
+        body_format: json
+        body:
+          count: 2
+
+    - name: Run with the token, through the throttling
+      ansible.builtin.include_role:
+        name: libre_devops.entra_device_groups
+      vars:
+        entra_device_groups_access_token: "{{ __token.json.access_token }}"
+        entra_device_groups_client_secret: ""
+        entra_device_groups_groups:
+          - group: Linux servers EDR
+            devices: [web01, web02]
+
+    - name: Check nothing changed
+      ansible.builtin.assert:
+        that:
+          - not entra_device_groups_results[0].changed
+          - entra_device_groups_results[0].unchanged | length == 2
+        quiet: true
+
+- name: Every refusal stops the role with a clear message
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Run the refusal cases
+      ansible.builtin.include_tasks: expect_failure.yml
+      loop_control:
+        loop_var: case
+        label: "{{ case.name }}"
+      loop:
+        - name: a missing device with missing set to fail
+          groups: [{group: Linux servers EDR, devices: [ghost01]}]
+          missing: fail
+          expect: No device matches ghost01
+        - name: a duplicate name with duplicates set to fail
+          groups: [{group: Linux servers EDR, devices: [app01]}]
+          duplicates: fail
+          expect: matches 2 devices
+        - name: a dynamic group
+          groups: [{group: Linux servers dynamic, devices: [web01]}]
+          expect: dynamic membership
+        - name: a Microsoft 365 group
+          groups: [{group: Team site, devices: [web01]}]
+          expect: Microsoft 365 group
+        - name: two groups with the same name
+          groups: [{group: Twin group, devices: [web01]}]
+          expect: 2 groups are called
+        - name: a group that does not exist
+          groups: [{group: No such group, devices: [web01]}]
+          expect: No group called
+        - name: a device both wanted and removed
+          groups: [{group: Linux servers EDR, devices: [web01], remove: [web01]}]
+          expect: both wanted and to be removed
+        - name: one group in add and exact mode
+          groups:
+            - {group: Linux servers EDR, devices: [web01]}
+            - {group: linux servers edr, devices: [web02], mode: exact}
+          expect: both add and exact
+        - name: a file with a groups key
+          files: ["{{ playbook_dir }}/../fixtures/bad-shape.json"]
+          expect: groups is reserved by Ansible
+        - name: a wrong client secret
+          groups: [{group: Linux servers EDR, devices: [web01]}]
+          client_secret: not-the-secret
+          expect: AADSTS7000215
+        - name: nothing to do
+          expect: Give at least one group

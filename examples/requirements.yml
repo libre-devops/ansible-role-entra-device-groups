@@ -1,0 +1,8 @@
+---
+# Install the role straight from GitHub, pinned to a release tag:
+#   ansible-galaxy install -r requirements.yml
+roles:
+  - name: libre_devops.entra_device_groups
+    src: https://github.com/libre-devops/ansible-role-entra-device-groups.git
+    scm: git
+    version: 1.0.0

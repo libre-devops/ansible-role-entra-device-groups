@@ -1,0 +1,39 @@
+# Development tools only. The role itself has no Python dependencies.
+[project]
+name = "ansible-role-entra-device-groups"
+version = "0.0.0"
+description = "Development tools for the libre_devops.entra_device_groups Ansible role"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "ansible-core>=2.21,<2.22",
+  "ansible-lint>=26.10,<27",
+  "molecule>=26.10,<27",
+  "pytest>=8",
+  "ruff>=0.8",
+  "yamllint>=1.38,<2",
+  "zizmor>=1.16,<2",
+]
+
+[tool.uv]
+package = false
+
+# Only resolve releases at least a week old, so a freshly published bad release is not picked up.
+exclude-newer = "7 days"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests use assert, and the fixtures use made-up credentials.
+"tests/**" = ["S101", "S105", "S106"]
+"molecule/fixtures/**" = ["S105", "S106"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]

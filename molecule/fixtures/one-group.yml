@@ -1,0 +1,5 @@
+---
+# A file can hold a single entry. It is merged with the other entries for the same group.
+group: Linux servers EDR
+devices:
+  - o'neil-lab01

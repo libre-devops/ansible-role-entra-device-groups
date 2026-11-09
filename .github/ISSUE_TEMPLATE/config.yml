@@ -1,0 +1,6 @@
+---
+blank_issues_enabled: false
+contact_links:
+  - name: Microsoft Graph group resource documentation
+    url: https://learn.microsoft.com/en-us/graph/api/resources/group?view=graph-rest-1.0
+    about: Questions about Microsoft Graph or Microsoft Entra ID itself, rather than this role.

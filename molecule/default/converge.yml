@@ -1,0 +1,16 @@
+---
+- name: Make the memberships match
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars.yml
+  vars:
+    # The bulk group by object ID, with 25 devices: two requests of 20 and 5.
+    entra_device_groups_groups:
+      - group: aaaaaaaa-0000-4000-8000-000000000003
+        devices: "{{ range(1, 26) | map('string') | map('regex_replace', '^(\\d)$', '0\\1') | map('regex_replace', '^', 'bulk') | list }}"
+    entra_device_groups_files:
+      - "{{ playbook_dir }}/../fixtures/groups.json"
+      - "{{ playbook_dir }}/../fixtures/one-group.yml"
+  roles:
+    - role: libre_devops.entra_device_groups

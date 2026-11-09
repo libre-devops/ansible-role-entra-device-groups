@@ -1,0 +1,31 @@
+---
+# Runs the role with one case's variables and checks it stops with the expected message.
+- name: "Run the role and expect a refusal: {{ case.name }}"
+  block:
+    - name: "Run the role: {{ case.name }}"
+      ansible.builtin.include_role:
+        name: libre_devops.entra_device_groups
+      vars:
+        entra_device_groups_groups: "{{ case.groups | default([]) }}"
+        entra_device_groups_files: "{{ case.files | default([]) }}"
+        entra_device_groups_missing: "{{ case.missing | default('warn') }}"
+        entra_device_groups_duplicates: "{{ case.duplicates | default('newest') }}"
+        entra_device_groups_client_secret: "{{ case.client_secret | default('molecule-client-secret') }}"
+
+    - name: "Fail if the role did not stop: {{ case.name }}"
+      ansible.builtin.fail:
+        msg: "The role accepted: {{ case.name }}"
+  rescue:
+    # A looped task that fails reports "One or more items failed" and keeps each item's
+    # message under results, so look in both places.
+    - name: "Check the message: {{ case.name }}"
+      vars:
+        __failure_text: >-
+          {{ ([ansible_failed_result.msg | default('')]
+              + (ansible_failed_result.results | default([]) | map(attribute='msg', default='') | list))
+             | join(' ') }}
+      ansible.builtin.assert:
+        that:
+          - case.expect in __failure_text
+        fail_msg: "Expected '{{ case.expect }}', got: {{ __failure_text }}"
+        quiet: true

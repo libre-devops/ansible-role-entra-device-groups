@@ -1,0 +1,30 @@
+{
+  "device_groups": [
+    {
+      "group": "Linux servers - endpoint detection",
+      "operating_system": "Linux",
+      "devices": [
+        "web01.example.internal",
+        "web02.example.internal",
+        "db01.example.internal"
+      ],
+      "remove": [
+        "old-web01.example.internal"
+      ]
+    },
+    {
+      "group": "Linux servers - pilot ring",
+      "operating_system": "Linux",
+      "mode": "exact",
+      "devices": [
+        "web01.example.internal"
+      ]
+    },
+    {
+      "group": "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa",
+      "devices": [
+        "bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb"
+      ]
+    }
+  ]
+}

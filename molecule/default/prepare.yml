@@ -1,0 +1,21 @@
+---
+- name: Start the mock Microsoft Graph
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Start the mock in the background
+      ansible.builtin.command:
+        argv: ["{{ ansible_playbook_python }}", "{{ playbook_dir }}/../fixtures/mock_graph.py", --port, "{{ mock_port }}"]
+      async: 3600
+      poll: 0
+      changed_when: true
+
+    - name: Wait for the mock to answer
+      ansible.builtin.uri:
+        url: "{{ mock_url }}/mock/stats"
+      register: __mock_stats
+      retries: 20
+      delay: 1
+      until: __mock_stats.status == 200

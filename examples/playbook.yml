@@ -1,0 +1,47 @@
+---
+# Example used by `just live`. Put the sign-in values in an encrypted vars file (see
+# vault.example.yml) and the groups in a JSON file (see groups.example.json), then:
+#
+#   just live -e @groups.json -e @vault.yml --ask-vault-pass             # make the changes
+#   just live -e @groups.json -e @vault.yml --ask-vault-pass --check --diff
+#                                                                        # only show them
+#
+# The groups file holds either a device_groups list or a single entry ({"group": ..., "devices":
+# [...]}). Its keys arrive as extra variables, which this play turns into the role's list.
+- name: Make Microsoft Entra ID group memberships match a JSON file
+  hosts: localhost
+  gather_facts: false
+  pre_tasks:
+    # Ansible ignores an extra variable called groups (it is reserved), so a file with a groups
+    # key arrives here as nothing at all.
+    - name: Check a groups file was given
+      ansible.builtin.assert:
+        that: device_groups is defined or group is defined
+        fail_msg: >-
+          Pass a groups file with a device_groups list or a single entry:
+          ansible-playbook examples/playbook.yml -e @groups.json. If the file has a groups key,
+          rename it to device_groups: Ansible reserves groups and ignores it.
+        quiet: true
+
+  roles:
+    - role: libre_devops.entra_device_groups
+      vars:
+        entra_device_groups_groups: >-
+          {{ device_groups if device_groups is defined
+             else [{'group': group,
+                    'devices': devices | default([]),
+                    'mode': mode | default('add'),
+                    'remove': remove | default([])}
+                   | combine({'operating_system': operating_system} if operating_system is defined else {})] }}
+
+  post_tasks:
+    - name: Show what changed in each group
+      ansible.builtin.debug:
+        msg: >-
+          {{ item.group_name }}: {{ 'would add' if ansible_check_mode else 'added' }}
+          {{ item.added | map(attribute='displayName') | list }},
+          {{ 'would remove' if ansible_check_mode else 'removed' }}
+          {{ item.removed | map(attribute='displayName') | list }}
+      loop: "{{ entra_device_groups_results | selectattr('changed') | list }}"
+      loop_control:
+        label: "{{ item.group_name }}"

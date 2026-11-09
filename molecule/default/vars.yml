@@ -1,0 +1,13 @@
+---
+# Shared by the scenario's playbooks. All values are made up for the mock.
+mock_port: 18944
+mock_url: "http://127.0.0.1:{{ mock_port }}"
+entra_device_groups_graph_url: "{{ mock_url }}"
+entra_device_groups_login_url: "{{ mock_url }}"
+entra_device_groups_tenant_id: molecule.example
+entra_device_groups_client_id: 22222222-2222-4222-8222-222222222222
+entra_device_groups_client_secret: molecule-client-secret
+entra_device_groups_operating_system: Linux
+entra_device_groups_max_retries: 3
+entra_device_groups_timeout: 10
+entra_device_groups_validate_certs: false

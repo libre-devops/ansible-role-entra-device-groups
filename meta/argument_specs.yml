@@ -1,0 +1,105 @@
+---
+argument_specs:
+  main:
+    short_description: Make the device members of Microsoft Entra ID groups match a desired state
+    description:
+      - Adds devices to Microsoft Entra ID security groups, and removes them, through
+        Microsoft Graph v1.0, so each group's device members match the list you give. Running
+        it again changes nothing.
+      - The list comes from variables, from JSON or YAML files, or both. Users, groups and
+        other members are never touched, even in exact mode.
+      - Supports check mode and diff mode.
+    author:
+      - Craig Thacker
+    options:
+      entra_device_groups_groups:
+        description: The desired state, one entry per group.
+        type: list
+        elements: dict
+        default: []
+        options:
+          group:
+            description: Group display name (exact match) or object ID.
+            type: str
+            required: true
+          devices:
+            description: Devices that must be members, by display name (exact match), object ID or Entra device ID.
+            type: list
+            elements: str
+            default: []
+          mode:
+            description: add only adds the listed devices. exact also removes device members that are not listed.
+            type: str
+            choices: [add, exact]
+            default: add
+          remove:
+            description: Devices that must not be members.
+            type: list
+            elements: str
+            default: []
+          operating_system:
+            description: Only match devices with this operatingSystem for this group. Overrides entra_device_groups_operating_system.
+            type: str
+      entra_device_groups_files:
+        description:
+          - JSON or YAML files on the control node with more entries. Each file holds one entry,
+            or a mapping with a device_groups list of entries.
+        type: list
+        elements: path
+        default: []
+      entra_device_groups_access_token:
+        description: A Microsoft Graph access token. When set, the client credentials are not used.
+        type: str
+        default: ""
+        no_log: true
+      entra_device_groups_tenant_id:
+        description: Tenant ID or primary domain, for the client credentials flow.
+        type: str
+        default: ""
+      entra_device_groups_client_id:
+        description: Application (client) ID, for the client credentials flow.
+        type: str
+        default: ""
+      entra_device_groups_client_secret:
+        description: Client secret, for the client credentials flow.
+        type: str
+        default: ""
+        no_log: true
+      entra_device_groups_graph_url:
+        description: Microsoft Graph root, without the version.
+        type: str
+        default: https://graph.microsoft.com
+      entra_device_groups_login_url:
+        description: Microsoft Entra ID sign-in root, for the client credentials flow.
+        type: str
+        default: https://login.microsoftonline.com
+      entra_device_groups_operating_system:
+        description: Only match devices with this operatingSystem, for example Linux. Empty matches any.
+        type: str
+        default: ""
+      entra_device_groups_duplicates:
+        description: When a name matches several devices, use the newest (by last sign-in), all of them, or fail.
+        type: str
+        choices: [newest, all, fail]
+        default: newest
+      entra_device_groups_missing:
+        description: When a device to add does not exist, warn and carry on, or fail.
+        type: str
+        choices: [warn, fail]
+        default: warn
+      entra_device_groups_batch_size:
+        description: Devices added per request, 1 to 20.
+        type: int
+        default: 20
+      entra_device_groups_max_retries:
+        description: Retries for each throttled (429) or unavailable (503, 504) request.
+        type: int
+        default: 5
+      entra_device_groups_timeout:
+        description: Seconds to wait for each HTTP response.
+        type: int
+        default: 60
+      entra_device_groups_validate_certs:
+        description: Check TLS certificates.
+        type: bool
+        default: true

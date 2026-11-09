@@ -1,0 +1,35 @@
+---
+galaxy_info:
+  namespace: libre_devops
+  role_name: entra_device_groups
+  author: Craig Thacker
+  company: Libre DevOps
+  description: >-
+    Make the device members of Microsoft Entra ID groups match a list, from variables or JSON
+    files, through Microsoft Graph: idempotent, with check mode, diff and exact mode
+  license: MIT
+  min_ansible_version: "2.16"
+  issue_tracker_url: https://github.com/libre-devops/ansible-role-entra-device-groups/issues
+  platforms:
+    - name: EL
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+    - name: Debian
+      versions:
+        - all
+    - name: MacOSX
+      versions:
+        - all
+  galaxy_tags:
+    - entra
+    - azure
+    - microsoftgraph
+    - groups
+    - devices
+    - intune
+    - defender
+
+dependencies: []

@@ -1,0 +1,68 @@
+---
+- name: Verify
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Read the mock's memberships
+      ansible.builtin.uri:
+        url: "{{ mock_url }}/mock/state"
+      register: __state
+
+    - name: Read the mock's counters
+      ansible.builtin.uri:
+        url: "{{ mock_url }}/mock/stats"
+      register: __stats
+
+    - name: Pick out the groups
+      ansible.builtin.set_fact:
+        __edr: "{{ __state.json.groups | selectattr('displayName', 'equalto', 'Linux servers EDR') | first }}"
+        __rtp: "{{ __state.json.groups | selectattr('displayName', 'equalto', 'Linux servers RTP') | first }}"
+        __bulk: "{{ __state.json.groups | selectattr('displayName', 'equalto', 'Linux servers bulk') | first }}"
+
+    - name: Check add mode added, kept and removed the right devices, and left the user alone
+      ansible.builtin.assert:
+        that:
+          # web01, app01 (the newest of two) and o'neil-lab01 added; web06 removed; web03 to
+          # web05 kept, though not listed, because this group is in add mode.
+          - __edr.devices == ['app01', "o'neil-lab01", 'web01', 'web02', 'web03', 'web04', 'web05']
+          - "'dddddddd-0000-4000-8000-000000000011' in __edr.device_ids"
+          - "'dddddddd-0000-4000-8000-000000000010' not in __edr.device_ids"
+          - __edr.others == ['Alex Example']
+        fail_msg: "{{ __edr | to_json }}"
+        quiet: true
+
+    - name: Check exact mode removed the unlisted device and kept the user and the group
+      ansible.builtin.assert:
+        that:
+          # db01 is the Linux one: the Windows device with the same name is filtered out.
+          - __rtp.devices == ['db01', 'web01']
+          - "'dddddddd-0000-4000-8000-000000000007' in __rtp.device_ids"
+          - __rtp.others == ['Bea Example', 'Nested group']
+        fail_msg: "{{ __rtp | to_json }}"
+        quiet: true
+
+    - name: Check the bulk group got all 25 devices, in batches of at most 20
+      ansible.builtin.assert:
+        that:
+          - __bulk.devices | length == 25
+          - __stats.json.bound_per_patch[:2] == [20, 5]
+          - __stats.json.bound_per_patch | max <= 20
+        fail_msg: "{{ __bulk.devices | length }} devices, batches {{ __stats.json.bound_per_patch }}"
+        quiet: true
+
+    - name: Check the counters
+      ansible.builtin.assert:
+        that:
+          # Only the first converge changed anything: four PATCH requests (bulk twice, EDR,
+          # RTP) and two removals (web06, old01).
+          - __stats.json.patches == 4
+          - __stats.json.removals == 2
+          - __stats.json.single_adds == 0
+          - __stats.json.removals_without_ref == 0
+          - __stats.json.rejected_queries == 0
+          - __stats.json.throttled == 2
+          - __stats.json.bad_tokens == 1
+        fail_msg: "{{ __stats.json | to_json }}"
+        quiet: true

@@ -1,0 +1,34 @@
+---
+# Every variable is described in README.md and validated by meta/argument_specs.yml.
+
+# The desired state: one entry per group.
+#   - group: Linux servers EDR            # display name (exact) or object ID
+#     devices: [web01, web02]             # display names (exact) or IDs
+#     mode: add                           # add, or exact to also remove unlisted devices
+#     remove: [old01]                     # devices that must not be members
+entra_device_groups_groups: []
+
+# JSON or YAML files with more entries, on the control node. Each file holds one entry, or
+# {"device_groups": [entries]}. Their entries are added to entra_device_groups_groups.
+entra_device_groups_files: []
+
+# Sign-in: a ready access token, or a client ID and secret for the client credentials flow.
+entra_device_groups_access_token: ""
+entra_device_groups_tenant_id: ""
+entra_device_groups_client_id: ""
+entra_device_groups_client_secret: ""
+
+# Endpoints. Change both for a national cloud (see README.md).
+entra_device_groups_graph_url: https://graph.microsoft.com
+entra_device_groups_login_url: https://login.microsoftonline.com
+
+# Matching.
+entra_device_groups_operating_system: ""
+entra_device_groups_duplicates: newest
+entra_device_groups_missing: warn
+
+# Requests.
+entra_device_groups_batch_size: 20
+entra_device_groups_max_retries: 5
+entra_device_groups_timeout: 60
+entra_device_groups_validate_certs: true

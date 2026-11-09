@@ -1,0 +1,5 @@
+{
+  "groups": [
+    {"group": "Linux servers EDR", "devices": ["web01"]}
+  ]
+}

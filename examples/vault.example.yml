@@ -1,0 +1,12 @@
+---
+# Sign-in values for examples/playbook.yml. Copy this file to vault.yml (which .gitignore keeps
+# out of git), fill in your own values, and encrypt it:
+#   ansible-vault encrypt vault.yml
+# Every value here is made up.
+entra_device_groups_tenant_id: contoso.example
+entra_device_groups_client_id: 00000000-0000-4000-8000-000000000000
+entra_device_groups_client_secret: replace-with-your-client-secret
+
+# For a national cloud, change both endpoints (see README.md):
+# entra_device_groups_graph_url: https://graph.microsoft.us
+# entra_device_groups_login_url: https://login.microsoftonline.us

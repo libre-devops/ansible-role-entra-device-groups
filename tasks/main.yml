@@ -1,0 +1,135 @@
+---
+# Runs on the control node (hosts: localhost, or delegate_to: localhost). Everything happens
+# through Microsoft Graph, so nothing is installed anywhere.
+
+- name: Check how to sign in
+  ansible.builtin.assert:
+    that: >-
+      entra_device_groups_access_token | length > 0
+      or (entra_device_groups_tenant_id | length > 0
+          and entra_device_groups_client_id | length > 0
+          and entra_device_groups_client_secret | length > 0)
+    fail_msg: >-
+      Set entra_device_groups_access_token, or all of entra_device_groups_tenant_id,
+      entra_device_groups_client_id and entra_device_groups_client_secret.
+    quiet: true
+
+- name: Check the batch size
+  ansible.builtin.assert:
+    that:
+      - entra_device_groups_batch_size >= 1
+      - entra_device_groups_batch_size <= 20
+    fail_msg: entra_device_groups_batch_size must be between 1 and 20 (Microsoft Graph adds at most 20 members per request).
+    quiet: true
+
+# Facts outlive the role, so start empty: a second run in the same play must not see the
+# files the first run read.
+- name: Start with no files read
+  ansible.builtin.set_fact:
+    __entra_device_groups_files_data: []
+
+- name: Read the files
+  ansible.builtin.set_fact:
+    __entra_device_groups_files_data: >-
+      {{ __entra_device_groups_files_data
+         + [{'file': item, 'data': lookup('ansible.builtin.file', item) | from_yaml}] }}
+  loop: "{{ entra_device_groups_files }}"
+
+- name: Check each file holds one entry or a device_groups list
+  ansible.builtin.assert:
+    that:
+      - item.data is mapping
+      - "'groups' not in item.data"
+      - >-
+        ('device_groups' in item.data and item.data.device_groups is sequence
+         and item.data.device_groups is not string and item.data.device_groups is not mapping)
+        or ('group' in item.data and 'device_groups' not in item.data)
+    fail_msg: >-
+      {{ item.file }} must hold either one entry ({"group": "...", "devices": [...]}) or a
+      mapping with a device_groups list ({"device_groups": [{"group": "...", ...}]}).
+      {{ "Rename its groups key to device_groups: groups is reserved by Ansible." if item.data is mapping and 'groups' in item.data else '' }}
+    quiet: true
+  loop: "{{ __entra_device_groups_files_data }}"
+  loop_control:
+    label: "{{ item.file }}"
+
+- name: Combine the variable and the files
+  ansible.builtin.set_fact:
+    __entra_device_groups_entries: >-
+      {%- set combined = namespace(entries=entra_device_groups_groups) -%}
+      {%- for file in __entra_device_groups_files_data -%}
+      {%- set combined.entries = combined.entries
+            + (file.data.device_groups if 'device_groups' in file.data else [file.data]) -%}
+      {%- endfor -%}
+      {{ combined.entries | to_json }}
+
+- name: Check there is something to do
+  ansible.builtin.assert:
+    that:
+      - __entra_device_groups_entries | from_json | length > 0
+    fail_msg: Give at least one group in entra_device_groups_groups or entra_device_groups_files.
+    quiet: true
+
+# The response holds the token, so the task output is hidden. The check after it shows Entra
+# ID's error message, which holds no secrets.
+- name: Get an access token with the client credentials
+  ansible.builtin.uri:
+    url: >-
+      {{ entra_device_groups_login_url | regex_replace('/+$', '') }}/{{ entra_device_groups_tenant_id }}/oauth2/v2.0/token
+    method: POST
+    body_format: form-urlencoded
+    body:
+      client_id: "{{ entra_device_groups_client_id }}"
+      client_secret: "{{ entra_device_groups_client_secret }}"
+      scope: "{{ entra_device_groups_graph_url | regex_replace('/+$', '') }}/.default"
+      grant_type: client_credentials
+    validate_certs: "{{ entra_device_groups_validate_certs }}"
+    timeout: "{{ entra_device_groups_timeout }}"
+    status_code: [200, 400, 401, 403]
+  register: __entra_device_groups_token
+  no_log: true
+  check_mode: false
+  when: entra_device_groups_access_token | length == 0
+
+- name: Check the sign-in worked
+  ansible.builtin.assert:
+    that:
+      - __entra_device_groups_token.status == 200
+      - __entra_device_groups_token.json.access_token is defined
+    fail_msg: >-
+      Microsoft Entra ID refused the client credentials ({{ __entra_device_groups_token.status }}):
+      {{ (__entra_device_groups_token.json | default({})).error_description | default(__entra_device_groups_token.msg | default('no details')) }}
+    quiet: true
+  when: entra_device_groups_access_token | length == 0
+
+- name: Make the group memberships match
+  entra_device_group_membership:
+    access_token: >-
+      {{ entra_device_groups_access_token if entra_device_groups_access_token | length > 0
+         else __entra_device_groups_token.json.access_token }}
+    graph_url: "{{ entra_device_groups_graph_url }}"
+    groups: "{{ __entra_device_groups_entries | from_json }}"
+    operating_system: "{{ entra_device_groups_operating_system }}"
+    duplicates: "{{ entra_device_groups_duplicates }}"
+    missing: "{{ entra_device_groups_missing }}"
+    batch_size: "{{ entra_device_groups_batch_size }}"
+    max_retries: "{{ entra_device_groups_max_retries }}"
+    timeout: "{{ entra_device_groups_timeout }}"
+    validate_certs: "{{ entra_device_groups_validate_certs }}"
+  register: __entra_device_groups_result
+
+- name: Keep the results as a fact
+  ansible.builtin.set_fact:
+    entra_device_groups_results: "{{ __entra_device_groups_result.results }}"
+
+- name: Summarise
+  ansible.builtin.debug:
+    msg: >-
+      {{ item.group_name }} ({{ item.mode }}): {{ 'would add' if ansible_check_mode else 'added' }}
+      {{ item.added | length }}, {{ 'would remove' if ansible_check_mode else 'removed' }}
+      {{ item.removed | length }}, already members {{ item.unchanged | length }}{{
+         (', not found: ' ~ (item.not_found | join(', '))) if item.not_found else '' }}{{
+         (', duplicate names: ' ~ (item.ambiguous | map(attribute='reference') | join(', '))) if item.ambiguous else '' }}
+  loop: "{{ entra_device_groups_results }}"
+  loop_control:
+    label: "{{ item.group_name }}"

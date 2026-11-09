@@ -1,0 +1,44 @@
+---
+# Runs on the control node against molecule/fixtures/mock_graph.py, a stand-in for Microsoft
+# Graph and the Entra ID token endpoint, so no containers and no tenant are needed.
+#
+# prepare      starts the mock
+# converge     signs in with client credentials and applies groups from a variable and two
+#              files: add mode with a missing and a duplicate device, exact mode next to user
+#              and group members, an explicit removal, 25 devices in batches, and paging
+# idempotence  runs converge again: nothing changes
+# side_effect  check mode, a ready access token, throttling, and every refusal
+# verify       checks the mock's memberships and counters
+# destroy      stops the mock (also first, to clear one left by a failed run)
+driver:
+  name: default
+  options:
+    managed: false
+
+platforms:
+  - name: instance
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      callback_result_format: yaml
+      interpreter_python: auto_silent
+  inventory:
+    host_vars:
+      instance:
+        ansible_connection: local
+
+verifier:
+  name: ansible
+
+scenario:
+  test_sequence:
+    - destroy
+    - syntax
+    - prepare
+    - converge
+    - idempotence
+    - side_effect
+    - verify
+    - destroy
