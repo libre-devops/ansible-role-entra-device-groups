@@ -3,14 +3,22 @@ name: Release
 
 # A semver tag (1.2.3, made with `just release 1.2.3`) creates a GitHub release with
 # generated notes, then asks Galaxy to import the role. Galaxy reads the version from the tag.
+# Run it by hand with a tag to import that tag into Galaxy again, for example after an outage.
 #
-# Needs the repository secret GALAXY_API_KEY: the API token from galaxy.ansible.com
-# (Collections > API token management) of an account that owns the libre_devops namespace.
+# Needs the GALAXY_API_KEY secret, which the libre-devops organisation provides: the API token
+# from galaxy.ansible.com (Collections > API token) of an account that owns the libre_devops
+# namespace.
 
 on:
   push:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: An existing release tag to import into Galaxy again, for example 1.0.0.
+        type: string
+        required: true
 
 permissions: {}
 
@@ -25,7 +33,7 @@ jobs:
   release:
     name: GitHub release and Galaxy import
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     permissions:
       contents: write
     steps:
@@ -38,6 +46,7 @@ jobs:
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Create the GitHub release
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
@@ -46,4 +55,5 @@ jobs:
       - name: Import the role into Galaxy
         env:
           GALAXY_API_KEY: ${{ secrets.GALAXY_API_KEY }}
-        run: uvx --from "rust-just==${JUST_VERSION}" just galaxy-import
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: uvx --from "rust-just==${JUST_VERSION}" just galaxy-import "$TAG"

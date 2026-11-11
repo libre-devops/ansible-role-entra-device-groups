@@ -63,6 +63,6 @@ release version:
     git tag -a '{{ version }}' -m 'Release {{ version }}'
     git push origin '{{ version }}'
 
-# Import the latest tag into Galaxy by hand (needs GALAXY_API_KEY).
-galaxy-import:
-    uv run ansible-galaxy role import --api-key "${GALAXY_API_KEY:?set GALAXY_API_KEY}" --role-name '{{ replace_regex(role, "^.*\\.", "") }}' '{{ github_owner }}' '{{ github_repo }}'
+# Import a release tag into Galaxy and wait for the result (needs GALAXY_API_KEY): just galaxy-import 1.0.0
+galaxy-import tag:
+    scripts/galaxy-import.sh '{{ replace_regex(role, "\\..*$", "") }}' '{{ replace_regex(role, "^.*\\.", "") }}' '{{ github_owner }}' '{{ github_repo }}' '{{ tag }}'
