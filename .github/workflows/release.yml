@@ -56,4 +56,6 @@ jobs:
         env:
           GALAXY_API_KEY: ${{ secrets.GALAXY_API_KEY }}
           TAG: ${{ inputs.tag || github.ref_name }}
-        run: uvx --from "rust-just==${JUST_VERSION}" just galaxy-import "$TAG"
+        run: |
+          [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::$TAG is not a semver tag such as 1.0.0"; exit 1; }
+          uvx --from "rust-just==${JUST_VERSION}" just galaxy-import "$TAG"

@@ -4,9 +4,9 @@ Notable changes to this role. The format follows [Keep a Changelog](https://keep
 
 ## Unreleased
 
-### Fixed
+### Changed
 
-- Galaxy import: call Galaxy's import API with the `libre_devops` namespace and the GitHub clone URL, because `ansible-galaxy role import` sends the GitHub organisation name, which Galaxy refuses with HTTP 500. The import now waits for the result and prints Galaxy's log, and the Release workflow can be run by hand to import a tag again.
+- The Release workflow imports the release's own tag into Galaxy, rather than the default branch, and can be run by hand with a tag to import that tag again.
 
 ## 1.0.0 - 2026-11-11
 

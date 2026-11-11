@@ -65,4 +65,5 @@ release version:
 
 # Import a release tag into Galaxy and wait for the result (needs GALAXY_API_KEY): just galaxy-import 1.0.0
 galaxy-import tag:
-    scripts/galaxy-import.sh '{{ replace_regex(role, "\\..*$", "") }}' '{{ replace_regex(role, "^.*\\.", "") }}' '{{ github_owner }}' '{{ github_repo }}' '{{ tag }}'
+    [[ '{{ tag }}' =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "tag must be semver, for example 1.0.0" >&2; exit 1; }
+    uv run ansible-galaxy role import --api-key "${GALAXY_API_KEY:?set GALAXY_API_KEY}" --branch '{{ tag }}' --role-name '{{ replace_regex(role, "^.*\\.", "") }}' '{{ github_owner }}' '{{ github_repo }}'
