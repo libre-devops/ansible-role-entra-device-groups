@@ -4,6 +4,8 @@ Notable changes to this role. The format follows [Keep a Changelog](https://keep
 
 ## Unreleased
 
+## 1.0.0 - 2026-11-11
+
 ### Added
 
 - First release.
