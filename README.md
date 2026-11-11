@@ -98,6 +98,8 @@ roles:
     version: 1.0.0
 ```
 
+Without Galaxy, or to keep a copy inside your organisation, see [Using the role without Galaxy](./docs/using-without-galaxy.md). It covers git, release archives, requirements files that point at your own servers, AWX and Automation Controller, and execution environments.
+
 ## Quick start
 
 ```yaml
