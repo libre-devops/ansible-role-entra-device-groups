@@ -157,7 +157,7 @@ def main(argv):
     if download != expected_download:
         raise SystemExit(f"Galaxy offers {download} for {role} {tag}, not {expected_download}")
     check_download(download)
-    print(f"{role} {tag} is on Galaxy: {SERVER}/ui/standalone/roles/{namespace}/{name}/")
+    print(f"{role} {tag} is on Galaxy: {SERVER}/ui/standalone/roles/{namespace}/{name}/documentation/")
     return 0
 
 

@@ -13,7 +13,7 @@ Adds devices to Microsoft Entra ID security groups and removes them, through Mic
 
 [![CI](https://github.com/libre-devops/ansible-role-entra-device-groups/actions/workflows/ci.yml/badge.svg)](https://github.com/libre-devops/ansible-role-entra-device-groups/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/libre-devops/ansible-role-entra-device-groups?sort=semver&label=release)](https://github.com/libre-devops/ansible-role-entra-device-groups/releases/latest)
-[![Galaxy](https://img.shields.io/badge/galaxy-libre__devops.entra__device__groups-EE0000?logo=ansible&logoColor=white)](https://galaxy.ansible.com/ui/standalone/roles/libre_devops/entra_device_groups/)
+[![Galaxy](https://img.shields.io/badge/galaxy-libre__devops.entra__device__groups-EE0000?logo=ansible&logoColor=white)](https://galaxy.ansible.com/ui/standalone/roles/libre_devops/entra_device_groups/documentation/)
 [![Licence](https://img.shields.io/github/license/libre-devops/ansible-role-entra-device-groups)](./LICENSE)
 
 ---
