@@ -531,7 +531,7 @@ The `default` scenario runs on the control node:
 
 1. Move the Unreleased entries in [`CHANGELOG.md`](./CHANGELOG.md) under the new version.
 2. Run `just release 1.2.3`. It tags the commit and pushes the tag.
-3. The Release workflow creates the GitHub release and imports the tag into Galaxy, which takes the version from the tag. It needs the `GALAXY_API_KEY` secret, which the libre-devops organisation provides. If the import fails, fix the cause and run the Release workflow by hand with the tag to import it again.
+3. The Release workflow creates the GitHub release, imports the tag into Galaxy, which takes the version from the tag, and installs it back from Galaxy to check. It needs the `GALAXY_API_KEY` secret, which the libre-devops organisation provides. The import goes through Galaxy's API with [`scripts/galaxy-import.py`](./scripts/galaxy-import.py), not `ansible-galaxy role import`, because Galaxy namespaces cannot contain a hyphen: the role namespace is `libre_devops` and the GitHub organisation is `libre-devops`, which that command cannot handle. If the import fails, fix the cause and run the Release workflow by hand with the tag to import it again.
 
 ## Sources
 

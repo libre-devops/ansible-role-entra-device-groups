@@ -63,7 +63,9 @@ release version:
     git tag -a '{{ version }}' -m 'Release {{ version }}'
     git push origin '{{ version }}'
 
-# Import a release tag into Galaxy and wait for the result (needs GALAXY_API_KEY): just galaxy-import 1.0.0
+# scripts/galaxy-import.py says why this does not use `ansible-galaxy role import`.
+# Import a release tag into Galaxy, then install it from Galaxy to check (needs GALAXY_API_KEY): just galaxy-import 1.0.0
 galaxy-import tag:
     [[ '{{ tag }}' =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "tag must be semver, for example 1.0.0" >&2; exit 1; }
-    uv run ansible-galaxy role import --api-key "${GALAXY_API_KEY:?set GALAXY_API_KEY}" --branch '{{ tag }}' --role-name '{{ replace_regex(role, "^.*\\.", "") }}' '{{ github_owner }}' '{{ github_repo }}'
+    uv run --no-project python scripts/galaxy-import.py '{{ role }}' '{{ github_owner }}' '{{ github_repo }}' '{{ tag }}'
+    dir="$(mktemp -d)" && trap 'rm -rf "$dir"' EXIT && uv run ansible-galaxy role install --roles-path "$dir" '{{ role }},{{ tag }}'

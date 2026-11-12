@@ -11,6 +11,7 @@ Notable changes to this role. The format follows [Keep a Changelog](https://keep
 ### Changed
 
 - The Release workflow imports the release's own tag into Galaxy, rather than the default branch, and can be run by hand with a tag to import that tag again.
+- The Release workflow imports through Galaxy's API (`scripts/galaxy-import.py`) instead of `ansible-galaxy role import`, which fails with HTTP 500 because the Galaxy namespace `libre_devops` differs from the GitHub organisation `libre-devops`. It then points the role's download links at the `libre-devops` repository and installs the tag from Galaxy to check.
 
 ## 1.0.0 - 2026-11-11
 

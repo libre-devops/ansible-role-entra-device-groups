@@ -2,8 +2,13 @@
 name: Release
 
 # A semver tag (1.2.3, made with `just release 1.2.3`) creates a GitHub release with
-# generated notes, then asks Galaxy to import the role. Galaxy reads the version from the tag.
-# Run it by hand with a tag to import that tag into Galaxy again, for example after an outage.
+# generated notes, then imports the tag into Galaxy with `just galaxy-import` and installs it
+# back from Galaxy to check. Galaxy reads the version from the tag. Run it by hand from main
+# with a tag to import that tag into Galaxy again, for example after an outage.
+#
+# The import goes through Galaxy's API (scripts/galaxy-import.py), not `ansible-galaxy role
+# import`, because Galaxy namespaces cannot contain a hyphen: the role namespace is
+# libre_devops and the GitHub organisation is libre-devops. The script explains the workaround.
 #
 # Needs the GALAXY_API_KEY secret, which the libre-devops organisation provides: the API token
 # from galaxy.ansible.com (Collections > API token) of an account that owns the libre_devops
